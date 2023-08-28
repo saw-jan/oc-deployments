@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  ldap:
+    image: osixia/openldap:latest
+    command: --copy-service --loglevel debug
+    environment:
+      LDAP_TLS_VERIFY_CLIENT: never
+      LDAP_DOMAIN: owncloud.com
+      LDAP_ORGANISATION: ownCloud
+      LDAP_ADMIN_PASSWORD: admin
+      LDAP_RFC2307BIS_SCHEMA: 'true'
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: 'false'
+    ports:
+      - '127.0.0.1:389:389'
+      - '127.0.0.1:636:636'
+    volumes:
+      - ./config/ldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    restart: always
+
+  oc10:
+    build:
+      context: ./config
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      LDAP_LOCAL_PORT: 389
+      LDAP_DOMAIN: owncloud.com
+      LDAP_ORGANISATION: ownCloud
+      LDAP_ROOTPASS: admin
+      LDAP_BASE_DN: dc=owncloud,dc=com
+      LDAP_LOGIN_DN: cn=admin,dc=owncloud,dc=com
+      OWNCLOUD_LOCKING_ENABLED: 'false'
+      # to access from virtualbox
+      # OWNCLOUD_TRUSTED_DOMAINS: '192.168.56.1'
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint
+      - ./config/configure-ldap.sh:/configure-ldap.sh
+    entrypoint: bash /entrypoint
+    depends_on:
+      - ldap
