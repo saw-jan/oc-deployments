@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  oc8:
+    image: sawjan/owncloud:8
+    ports:
+      - 8080:80
