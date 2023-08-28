@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  apache:
+    image: owncloudci/php:7.4
+    environment:
+      APACHE_WEBROOT: /var/www/owncloud
+      APACHE_CONFIG_TEMPLATE: ssl
+      APACHE_SSL_CERT_CN: server
+      APACHE_SSL_CERT: /etc/ssl/private/ssl.crt
+      APACHE_SSL_KEY: /etc/ssl/private/ssl.key
+      APACHE_LOGGING_PATH: /dev/null
+    ports:
+      - 8080:80
+      - 8443:443
+    volumes:
+      - ./apache.sh:/entrypoint
+      - server:/var/www/owncloud
+    entrypoint: bash /entrypoint
+    extra_hosts:
+      - host.docker.internal:host-gateway
+  oc10:
+    image: owncloudci/core
+    environment:
+      PLUGIN_VERSION: latest
+      PLUGIN_CORE_PATH: /var/www/owncloud
+    volumes:
+      - server:/var/www/owncloud
+      - ./entrypoint.sh:/entrypoint
+    entrypoint: bash /entrypoint
+    depends_on:
+      - apache
+
+volumes:
+  server:
